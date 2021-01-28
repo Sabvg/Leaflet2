@@ -1,4 +1,4 @@
-let map = L.map('mapid').on('load', onMapLoad).setView([41.400, 2.206], 12);
+let map = L.map('mapid').on('load', onMapLoad).setView([41.400, 2.206], 11);
 //map.locate({setView: true, maxZoom: 17});
 
 let tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {}).addTo(map);
@@ -19,6 +19,7 @@ function onMapLoad() {
     $.ajax({
         type: "POST",
         url: "http://localhost:8080/mapa/api/apiRestaurants.php",
+        dataType: "json",
         success: function(data) {
             let kind = [];
 
@@ -45,8 +46,7 @@ function onMapLoad() {
             kind_filter.forEach(function(value) {
                 $("#kind_food_selector").append("<option>" + value + "</option>");
             });
-
-            render_to_map(data_markers, 'all');
+            render_to_map(data_markers, "Todos");
         }
     });
 }
@@ -55,7 +55,6 @@ $("#kind_food_selector").on("change", function() {
     console.log(this.value);
     render_to_map(data_markers, this.value);
 });
-
 
 function render_to_map(data_markers, filter) {
     /*
@@ -67,23 +66,15 @@ function render_to_map(data_markers, filter) {
     markers.clearLayers();
 
     let marker;
-    if (filter === "Todos") {
-        for (let i = 0; i < data_markers.length; i++) {
+
+    for (let i = 0; i < data_markers.length; i++) {
+        let type = data_markers[i].kind_food;
+        if (filter === "Todos" || (type.split(",").includes(filter))) {
             marker = L.marker([data_markers[i].lat, data_markers[i].lng], data_markers[i].name, data_markers[i].address);
             marker.addTo(markers);
             marker.bindPopup(
-                "<p>Restaurante: " + data_markers[i].name + "</p> <p>" + data_markers[i].kind_food + "</p>");
+                "<p>Restaurante: " + data_markers[i].name + "</p> <p>Tipo de comida: " + data_markers[i].kind_food + "</p> <p>Dirección: " + data_markers[i].address + "</p>");
             markers.addLayer(marker);
-        }
-    } else {
-        for (let i = 0; i < data_markers.length; i++) {
-            let type = data_markers[i].kind_food;
-            if (type.split(",").includes(filter)) {
-                marker = L.marker([data_markers[i].lat, data_markers[i].lng], data_markers[i].name);
-                marker.addTo(markers);
-                marker.bindPopup("<p><b></b>Restaurante: " + data_markers[i].name + "<br>" + data_markers[i].address + "</b></p>");
-                markers.addLayer(marker);
-            }
         }
     }
     map.addLayer(markers);
